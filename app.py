@@ -15,7 +15,7 @@ st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-header {visibility: hidden;}
+header {visibility: visible !important;}
 html, body, [class*="css"] { font-family: 'Segoe UI', system-ui, sans-serif; }
 .card {
     background: #1B2332;
@@ -108,7 +108,6 @@ with st.sidebar:
     page = st.radio(
         "Menu",
         ["Dashboard", "Employee Profile", "HR Analysis",
-         "—",
          "AI Approach", "Compliance & Ethics"],
         label_visibility="collapsed",
     )
@@ -124,10 +123,6 @@ with st.sidebar:
         <b style='color:#3B82F6;'>Explainable AI</b> — SHAP active
       </span>
     </div>""", unsafe_allow_html=True)
-
-if page == "—":
-    st.info("Select a page from the menu.")
-    st.stop()
 
 if page == "Dashboard":
     st.markdown(f"""

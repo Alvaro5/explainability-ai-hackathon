@@ -362,7 +362,7 @@ def styled_chart(fig, height=None):
 
 @st.cache_data(show_spinner="Loading data...")
 def load_data():
-    df = pd.read_csv("data/HRDataset_v14.csv")
+    df = pd.read_csv("data/raw/HRDataset_v14.csv")
     df["Employee_Name"] = df["Employee_Name"].apply(
         lambda x: hashlib.sha256(str(x).encode()).hexdigest()[:8].upper()
     )
@@ -424,10 +424,11 @@ def train_models(_df_tuple):
     y = df_fe["Termd"]
     feat_names = X.columns.tolist()
 
+    X.fillna(0, inplace=True)
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=SEED, stratify=y)
     scaler   = StandardScaler()
-    X_tr_sc  = scaler.fit_transform(X_tr)
-    X_te_sc  = scaler.transform(X_te)
+    X_tr_sc  = np.nan_to_num(scaler.fit_transform(X_tr), nan=0.0)
+    X_te_sc  = np.nan_to_num(scaler.transform(X_te), nan=0.0)
 
     MODEL_DEFS = {
         "Logistic Regression": LogisticRegression(max_iter=1000, C=0.5, random_state=SEED),

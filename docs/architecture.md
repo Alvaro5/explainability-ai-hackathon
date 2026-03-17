@@ -60,13 +60,17 @@ hr_anonymized.csv   hr_sensitive.csv
              |
              v
 +------------------------------------------+
-|   4. HR Dashboard                        |
-|   notebook: 02_model.ipynb               |
+|   4. HR Dashboard (Streamlit)            |
+|   app: app.py + model.py                 |
 |                                          |
-|   - Table of employees with risk scores  |
-|   - SHAP explanation per employee        |
-|   - Filters: department, risk, tenure    |
-|   - Designed for non-technical HR users  |
+|   Pages:                                 |
+|   - Dashboard: KPIs, at-risk table       |
+|   - Employee Profile: individual SHAP    |
+|   - HR Analysis: company-wide analytics  |
+|   - AI Approach: model & SHAP docs       |
+|   - Compliance & Ethics: GDPR, AI Act    |
+|                                          |
+|   Deployed: Streamlit Community Cloud    |
 +------------------------------------------+
 ```
 
@@ -97,7 +101,7 @@ The solution runs as a batch job rather than a real-time API. This fits the use 
 ## File Structure
 
 ```
-hr-trusted-ai/
+explainability-ai-hackathon/
 |
 |-- raw/
 |   |-- HRDataset.csv
@@ -109,6 +113,15 @@ hr-trusted-ai/
 |-- 01_eda.ipynb
 |-- 02_model.ipynb
 |-- 03_frugal.ipynb
+|
+|-- app.py                    <- Streamlit entry point
+|-- model.py                  <- data loading, feature engineering, model training
+|-- pages_employees.py        <- Employee Profile page
+|-- pages_analysis.py         <- HR Analysis page
+|-- pages_ia.py               <- AI Approach + Compliance & Ethics pages
+|
+|-- .streamlit/
+|   |-- config.toml           <- dark theme configuration
 |
 |-- emissions.csv
 |-- frugal_comparison.csv
@@ -122,6 +135,7 @@ hr-trusted-ai/
 |-- executive_summary.md
 |-- README.md
 |-- requirements.txt
+|-- .gitignore
 ```
 
 ---
@@ -135,3 +149,17 @@ Run the notebooks in this order:
 3. `02_model.ipynb` — trains the final Random Forest, generates SHAP explanations, and launches the dashboard
 
 Each notebook is self-contained and includes comments explaining each step. No GPU is required. The full pipeline runs in under 10 seconds on a standard laptop.
+
+---
+
+## Dashboard Deployment
+
+The Streamlit dashboard is deployed on **Streamlit Community Cloud**:
+
+- **URL**: https://explainability-ai-hackathon.streamlit.app/
+- **Platform**: Streamlit Community Cloud (free tier)
+- **Auto-deploy**: pushes to `main` trigger automatic redeployment
+- **Entry point**: `app.py`
+- **Theme**: dark mode via `.streamlit/config.toml`
+
+To run locally: `streamlit run app.py` (opens at `http://localhost:8501`).

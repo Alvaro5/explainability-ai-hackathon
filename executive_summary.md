@@ -13,7 +13,7 @@ A fictional company is experiencing a high employee resignation rate and does no
 
 We built an end-to-end AI pipeline that predicts which employees are at risk of leaving and explains the key factors behind each prediction in plain language. The solution is designed for HR managers with no technical background — the output is not just a score, it is an explanation they can act on.
 
-The pipeline covers data anonymization, model training, SHAP-based explainability, and an interactive dashboard. The entire solution runs on a standard laptop with no cloud infrastructure required.
+The pipeline covers data anonymization, model training, SHAP-based explainability, and an interactive dashboard. The solution runs on a standard laptop and is also publicly deployed on Streamlit Community Cloud at https://explainability-ai-hackathon.streamlit.app/.
 
 ## Trusted AI Themes
 
@@ -39,6 +39,7 @@ The solution was built with compliance in mind from the start. Personal data is 
 
 ## Deliverables
 
-The GitHub repository contains three notebooks covering data processing, model training with explainability, and the frugal comparison; a working HR dashboard; a model card and data card; and this document. Everything is documented and reproducible.
+The GitHub repository contains three notebooks covering data processing, model training with explainability, and the frugal comparison; a Streamlit dashboard with five pages (Dashboard, Employee Profile, HR Analysis, AI Approach, Compliance & Ethics); a model card and data card; and this document. Everything is documented and reproducible.
 
-Repository: https://github.com/Alvaro5/explainability-ai-hackathon
+- **Repository**: https://github.com/Alvaro5/explainability-ai-hackathon
+- **Live dashboard**: https://explainability-ai-hackathon.streamlit.app/

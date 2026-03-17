@@ -119,12 +119,30 @@ See `docs/data_card.md` for the full data processing and GDPR documentation.
 
 ## Dashboard
 
-The dashboard is built for HR teams. It shows:
-- Predicted risk score per employee
-- The top 3 factors behind each prediction (from SHAP)
-- Filters by department, risk level, and tenure
+The dashboard is a full Streamlit web application (`app.py`) built for non-technical HR teams. It includes five pages:
 
-Run `02_model.ipynb` to launch it, or see the `demo/` folder for a recorded walkthrough.
+| Page | Description |
+|---|---|
+| **Dashboard** | KPI overview, turnover rate, at-risk employee table, department breakdown |
+| **Employee Profile** | Individual employee view with SHAP-based risk explanation and suggested actions |
+| **HR Analysis** | Company-wide analytics and feature importance charts |
+| **AI Approach** | Explanation of the models, SHAP methodology, and frugal AI comparison |
+| **Compliance & Ethics** | GDPR, EU AI Act, and responsible AI documentation |
+
+The app uses a dark theme (`.streamlit/config.toml`) and custom CSS styling for readability.
+
+### Live Demo
+
+The dashboard is publicly deployed on Streamlit Community Cloud:
+**https://explainability-ai-hackathon.streamlit.app/**
+
+### Run Locally
+
+```bash
+streamlit run app.py
+```
+
+Opens at `http://localhost:8501`.
 
 ---
 
@@ -134,10 +152,28 @@ Run `02_model.ipynb` to launch it, or see the `demo/` folder for a recorded walk
 git clone https://github.com/Alvaro5/explainability-ai-hackathon
 cd explainability-ai-hackathon
 pip install -r requirements.txt
+```
+
+**Run the dashboard:**
+```bash
+streamlit run app.py
+```
+
+**Run the notebooks:**
+```bash
 jupyter notebook
 ```
 
 Python 3.10+, no GPU needed, around 500MB disk space.
+
+---
+
+## Deployment
+
+The Streamlit dashboard is deployed on **Streamlit Community Cloud** and publicly accessible:
+- **URL**: https://explainability-ai-hackathon.streamlit.app/
+- **Platform**: Streamlit Community Cloud (free tier)
+- **Auto-deploy**: pushes to `main` branch trigger automatic redeployment
 
 ---
 
@@ -148,7 +184,7 @@ Python 3.10+, no GPU needed, around 500MB disk space.
 - [x] docs/data_card.md
 - [x] docs/architecture.md
 - [x] executive_summary.md
-- [x] Demo (demo/ folder or notebook)
+- [x] Streamlit dashboard (app.py) — live at https://explainability-ai-hackathon.streamlit.app/
 - [x] Slides
 
 ---

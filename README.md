@@ -1,105 +1,164 @@
-# HR Trusted AI - Employee Turnover Prediction
-Hackathon Explainability AI - ESILV A4 - March 2026
+# HR Trusted AI — Employee Turnover Prediction
 
-## Team :
-```bash
-Alvaro Serero
-Ziyad Briand
-Omar Bari
-Le-Nguyen Nguyen
-Rithiga Vengadessane
-```
+Explainability AI Hackathon - ESILV A4 - March 2026  
+Repository: https://github.com/Alvaro5/explainability-ai-hackathon
+
+## Team
+
+- Alvaro Serero
+- Ziyad Briand
+- Omar Bari
+- Le-Nguyen Nguyen
+- Rithiga Vengadessane
+
+---
 
 ## Objective
 
-An imaginary company is facing a high resignation rate. The goal of this project is to build an AI solution that helps HR teams identify employees who may leave and understand the main reasons behind it. The approach focuses on transparency and efficiency.
+The context is a fictional company dealing with a high resignation rate. The goal was to build an AI solution that helps HR managers figure out which employees are at risk of leaving, and more importantly, understand why — without requiring them to have any ML background.
 
-The project is based on two main ideas:
-- making the model understandable for non-technical users
-- keeping the solution lightweight in terms of resources
+We chose to focus on two of the four Trusted AI themes:
+- **Explainable AI** — predictions need to be interpretable for HR teams, not just accurate
+- **Frugal AI** — the solution should be lightweight enough to run on a standard company machine, and we wanted to measure the actual carbon cost of our choices
 
-These two directions were chosen because HR use cases require both trust and practicality. The predictions made by the model can impact important decisions, so they must be understandable and justified. At the same time, the solution needs to be simple enough to be deployed in a real company environment without requiring heavy infrastructure.
+---
 
-Explainable AI is used to ensure that HR managers can understand the results produced by the model. Instead of providing only a risk score, the model also gives clear explanations for each prediction. We use methods such as feature importance and SHAP values to show which variables have the most influence. This allows HR teams to understand why an employee is considered at risk, for example due to low satisfaction, high overtime, or salary level.
+## Scope
 
-Frugal AI focuses on building a solution that remains efficient while using limited resources. Instead of directly relying on complex models, we compare several approaches such as logistic regression, random forest, and more advanced methods. We evaluate both their performance and their computational cost. The objective is to select a model that provides good results while remaining simple, efficient, and easy to use in practice.
+What the solution does:
+- Predicts attrition risk per employee (binary classification on the `Termd` field)
+- Provides SHAP-based explanations at both the global and individual level
+- Compares three models on accuracy and environmental cost
+- Applies GDPR-compliant anonymization before any processing
+- Exposes results through an HR dashboard
 
-## Use Cases & Personas
+What we did not cover:
+- Real-time inference (this is batch only)
+- Integration with a live HR system
+- Full NLP pipeline on unstructured feedback (we explored it but did not include it in the final model)
 
-### Use Case: Employee Attrition Risk Analysis
+---
+
+## Use Cases and Personas
+
+**Use case: Employee Attrition Risk Analysis**
 
 | Persona | Need |
 |---|---|
-| HR Manager (Marie) | Needs to identify employees at risk of leaving and understand what actions to take |
-| HR-AI Solution Provider | Provides a tool that helps HR teams make decisions based on clear and understandable results |
+| HR Manager (Marie) | Needs to know which employees are at risk of leaving in the next few months, and what actions to take. Does not have a technical background and needs explanations she can actually use. |
+| HR-AI Solution Provider | Delivers a tool that HR teams can trust. Results have to be transparent and justifiable, not just a score with no context. |
+
+---
 
 ## Solution Architecture
 
-1. Raw HR Data (CSV)  
-2. Data Processing (cleaning, anonymization, feature engineering)  
-3. Model (Logistic Regression, Random Forest, XGBoost comparison)  
-4. Explainability (feature importance, SHAP analysis)  
-5. Dashboard (risk score and explanation for each employee)
+```
+Raw HR Data (CSV)
+      |
+      v
+[1. Data Processing]
+   - Anonymization (GDPR): names removed, IDs pseudonymized, DOB generalized
+   - Feature engineering: tenure_days, age_group
+   - Output: hr_anonymized.csv (model input) + hr_sensitive.csv (bias audit only)
+      |
+      v
+[2. Model Comparison — Frugal AI]
+   - Logistic Regression  -> ROC-AUC: 1.000 | F1: 0.988 | CO2: 0.0020g | Time: 2.67s
+   - Random Forest        -> ROC-AUC: 1.000 | F1: 0.994 | CO2: 0.0011g | Time: 1.48s  (selected)
+   - XGBoost              -> ROC-AUC: 0.994 | F1: 0.988 | CO2: 0.0001g | Time: 0.19s
+      |
+      v
+[3. Explainability]
+   - Global: feature importance across all employees
+   - Local: per-employee SHAP values ("at risk because PayRate is low and tenure is short")
+      |
+      v
+[4. HR Dashboard]
+   - Risk score + top 3 factors per employee
+   - Designed for non-technical HR users
+```
 
+See `docs/architecture.md` for the full diagram and design decisions.
+
+---
+
+## Model Performance
+
+All metrics are from 5-fold cross-validation. Carbon tracking done with CodeCarbon on Apple M3 Pro, Ile-de-France, France.
+
+| Model | ROC-AUC (mean +/- std) | F1 Score (mean) | Training Time | CO2 Emissions |
+|---|---|---|---|---|
+| Logistic Regression | 1.000 +/- 0.000 | 0.988 | 2.67s | 0.0020g |
+| Random Forest | 1.000 +/- 0.000 | 0.994 | 1.48s | 0.0011g |
+| XGBoost | 0.994 +/- 0.012 | 0.988 | 0.19s | 0.0001g |
+
+We went with Random Forest. It ties Logistic Regression on ROC-AUC but has a better F1, and it costs 45% less in carbon. XGBoost is faster and lighter but drops in ROC-AUC, which we did not want to sacrifice for this use case.
+
+---
 
 ## Dataset
 
-- Source: Human Resources Data Set and Kaggle (Rich Huebner)
+- Source: Human Resources Data Set, Kaggle (Rich Huebner & Carla Patalano)
 - Around 400 synthetic employee records
-- Target variable: Termd (0 = still employed, 1 = left the company)
-- Includes sensitive attributes such as gender and ethnicity
+- Target variable: `Termd` (0 = still employed, 1 = left the company)
+- Contains sensitive attributes: `Sex`, `RaceDesc`, `HispanicLatino` — kept aside for bias auditing only, never fed into the model
+
+See `docs/data_card.md` for the full data processing and GDPR documentation.
+
+---
 
 ## Notebooks
 
-| Notebook | Description |
-|---|---|
-| 01_eda.ipynb | Data exploration and preparation |
-| 02_model.ipynb | Model training and explanations |
-| 03_frugal.ipynb | Model comparison and efficiency analysis |
+| Notebook | What it does | Run order |
+|---|---|---|
+| `01_eda.ipynb` | Data exploration, anonymization, visualizations | 1 |
+| `02_model.ipynb` | Model training, SHAP explainability, dashboard | 2 |
+| `03_frugal.ipynb` | Model comparison + CodeCarbon tracking | 3 |
+
+---
 
 ## Dashboard
 
-We built a dashboard designed for HR teams to explore employee data and identify potential risks of departure.
+The dashboard is built for HR teams. It shows:
+- Predicted risk score per employee
+- The top 3 factors behind each prediction (from SHAP)
+- Filters by department, risk level, and tenure
 
-The dashboard allows users to:
-- view the predicted risk score for each employee
-- understand the main factors influencing the prediction
-- explore key indicators such as satisfaction, salary, and performance
+Run `02_model.ipynb` to launch it, or see the `demo/` folder for a recorded walkthrough.
 
-This tool helps HR managers make informed decisions and take preventive actions based on clear and accessible insights.
-
-## Deliverables
-
-- README.md
-- docs/model_card.md
-- docs/data_card.md
-- docs/architecture.md
-- executive_summary.md
-- demo of the solution
-- slides
+---
 
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR_TEAM/hr-trusted-ai
-cd hr-trusted-ai
+git clone https://github.com/Alvaro5/explainability-ai-hackathon
+cd explainability-ai-hackathon
 pip install -r requirements.txt
 jupyter notebook
+```
 
+Python 3.10+, no GPU needed, around 500MB disk space.
 
-Explainability :
+---
 
-The model is designed to provide clear explanations for its predictions. For each employee, it is possible to identify the main factors that influence the risk of leaving.
+## Deliverables
 
-Two types of explanations are used:
+- [x] README.md
+- [x] docs/model_card.md
+- [x] docs/data_card.md
+- [x] docs/architecture.md
+- [x] executive_summary.md
+- [x] Demo (demo/ folder or notebook)
+- [x] Slides
 
-Overall feature importance and individual explanations for each prediction.
+---
 
+## Responsible AI Summary
 
-Frugality :
-
-Several models are compared in terms of performance and resource usage:
-
-Logistic Regression, Random Forest and XGBoost.
-
-The goal is to choose a model that gives good results while remaining efficient.
+| Dimension | What we did |
+|---|---|
+| GDPR | Names suppressed, DOB generalized, IDs pseudonymized |
+| AI Act | Classified as High Risk (HR/employment context) — human oversight required before any decision |
+| Fairness | Sensitive attributes excluded from model inputs; bias audit run separately |
+| Transparency | SHAP explanations at global and individual level, model card and data card provided |
+| Frugality | Carbon footprint tracked with CodeCarbon, lightest sufficient model selected |

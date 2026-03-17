@@ -56,7 +56,7 @@ def render(data):
           Employee #{int(e['EmpID'])}
         </div>
         <div style='color:{C['text_muted']};margin-top:5px;font-size:.93rem;'>
-          {e['Department']} · {e['Position']} · {e['Sex']}
+          {e['Department']} · {e['Position']}
         </div>
         <div style='color:{C['text_muted']};margin-top:3px;font-size:.88rem;'>
           Tenure: <b style='color:{C['text']};'>{e['Tenure_Years']:.1f} yrs</b> &nbsp;·&nbsp;
@@ -85,21 +85,26 @@ def render(data):
     shap_vals  = [v for v,_ in top_pairs]
     shap_feats = [feat_fr(f) for _,f in top_pairs]
 
-    # Show SHAP values as a table instead of chart
-    shap_table = pd.DataFrame({
-        "Factor": shap_feats,
-        "Direction": ["Increases risk" if v > 0.05 else "Moderate increase" if v > 0.01
-                      else "Protective" if v < -0.05 else "Slightly protective" if v < -0.01
-                      else "Weak impact" for v in shap_vals],
-        "SHAP Value": [f"{v:+.4f}" for v in shap_vals],
-        "Impact": ["High" if abs(v) > 0.05 else "Moderate" if abs(v) > 0.01 else "Low"
-                   for v in shap_vals],
-    })
-
-    col_table, col_expl = st.columns([3,2])
-    with col_table:
-        st.dataframe(shap_table, use_container_width=True, hide_index=True)
-        st.caption("Positive SHAP = increases departure risk | Negative SHAP = reduces departure risk | Magnitude = intensity")
+    col_chart, col_expl = st.columns([3,2])
+    with col_chart:
+        bar_colors = [C["danger"] if v > 0 else C["success"] for v in shap_vals]
+        fig_shap = go.Figure(go.Bar(
+            x=shap_vals[::-1],
+            y=shap_feats[::-1],
+            orientation="h",
+            marker=dict(color=bar_colors[::-1]),
+            text=[f"{v:+.4f}" for v in shap_vals[::-1]],
+            textposition="outside",
+            textfont=dict(color=C["text"], size=11),
+        ))
+        fig_shap = styled_chart(fig_shap, height=300)
+        fig_shap.update_layout(
+            xaxis_title="SHAP Value",
+            margin=dict(l=10, r=50, t=20, b=30),
+        )
+        fig_shap.add_vline(x=0, line_color=C["card_border"])
+        st.plotly_chart(fig_shap, use_container_width=True)
+        st.caption("Red = increases departure risk | Green = reduces departure risk | Bar length = intensity")
 
     with col_expl:
         st.markdown("<br>", unsafe_allow_html=True)
@@ -128,11 +133,10 @@ def render(data):
         if len(exit_rows) > 0:
             with cols_fb[ci % n_cols]:
                 st.markdown(f"""
-                <div style="background:{C['card_bg']};border:1px solid {C['card_border']};
-                            border-left:3px solid {C['danger']};padding:14px;border-radius:0 10px 10px 0;">
-                  <div style="font-size:.75rem;font-weight:700;color:{C['danger']};margin-bottom:8px;">
-                    EXIT INTERVIEW</div>
-                  <div style="font-style:italic;font-size:.9rem;color:{C['text']};line-height:1.5;">
+                <div class="card" style="border-left:4px solid {C['danger']}; padding: 18px;">
+                  <div style="font-size:.75rem;font-weight:700;color:{C['danger']};margin-bottom:12px;letter-spacing:0.5px;">
+                    <i class="fas fa-sign-out-alt"></i> EXIT INTERVIEW</div>
+                  <div style="font-style:italic;font-size:.95rem;color:{C['text']};line-height:1.6;">
                     "{exit_rows.iloc[0]['Text']}"</div>
                 </div>""", unsafe_allow_html=True)
             ci += 1
@@ -141,22 +145,20 @@ def render(data):
             col_bd  = C["danger"] if is_neg else C["success"]
             with cols_fb[ci % n_cols]:
                 st.markdown(f"""
-                <div style="background:{C['card_bg']};border:1px solid {C['card_border']};
-                            border-left:3px solid {col_bd};padding:14px;border-radius:0 10px 10px 0;">
-                  <div style="font-size:.75rem;font-weight:700;color:{col_bd};margin-bottom:8px;">
-                    SATISFACTION SURVEY</div>
-                  <div style="font-style:italic;font-size:.9rem;color:{C['text']};line-height:1.5;">
+                <div class="card" style="border-left:4px solid {col_bd}; padding: 18px;">
+                  <div style="font-size:.75rem;font-weight:700;color:{col_bd};margin-bottom:12px;letter-spacing:0.5px;">
+                    <i class="fas fa-poll"></i> SATISFACTION SURVEY</div>
+                  <div style="font-style:italic;font-size:.95rem;color:{C['text']};line-height:1.6;">
                     "{survey_rows.iloc[0]['Text']}"</div>
                 </div>""", unsafe_allow_html=True)
             ci += 1
         if len(transf_rows) > 0:
             with cols_fb[ci % n_cols]:
                 st.markdown(f"""
-                <div style="background:{C['card_bg']};border:1px solid {C['card_border']};
-                            border-left:3px solid {C['primary']};padding:14px;border-radius:0 10px 10px 0;">
-                  <div style="font-size:.75rem;font-weight:700;color:{C['primary']};margin-bottom:8px;">
-                    INTERNAL MOBILITY REQUEST</div>
-                  <div style="font-style:italic;font-size:.9rem;color:{C['text']};line-height:1.5;">
+                <div class="card" style="border-left:4px solid {C['primary']}; padding: 18px;">
+                  <div style="font-size:.75rem;font-weight:700;color:{C['primary']};margin-bottom:12px;letter-spacing:0.5px;">
+                    <i class="fas fa-exchange-alt"></i> INTERNAL MOBILITY REQUEST</div>
+                  <div style="font-style:italic;font-size:.95rem;color:{C['text']};line-height:1.6;">
                     "{transf_rows.iloc[0]['Text']}"</div>
                 </div>""", unsafe_allow_html=True)
 

@@ -32,11 +32,10 @@ def render(data):
     dept_df["Status"]          = dept_df["Turnover"].apply(
         lambda r: "HIGH RISK" if r > avg*1.25 else "ELEVATED" if r > avg else "OK")
 
-    st.dataframe(
-        dept_df[["Department","Headcount","Turnover %","vs Average","Status","Avg Salary","Avg Tenure (yrs)"]]
-          .sort_values("Turnover %", ascending=False).reset_index(drop=True),
-        use_container_width=True,
-    )
+    dept_display = (dept_df.sort_values("Turnover", ascending=False)
+                    [["Department","Headcount","Turnover %","vs Average","Status","Avg Salary","Avg Tenure (yrs)"]]
+                    .reset_index(drop=True))
+    st.dataframe(dept_display, use_container_width=True)
     st.caption(f"Company average turnover: {avg:.1%} | Departments above +25% of average are flagged HIGH RISK")
 
     st.markdown('<p class="section-title">Factors Influencing Turnover</p>', unsafe_allow_html=True)
@@ -80,11 +79,10 @@ def render(data):
     examples  = exit_texts[exit_texts["Theme"]==raw_theme]["Text"].head(3)
     for ex in examples:
         st.markdown(f"""
-        <div style="background:{C['card_bg']};border:1px solid {C['card_border']};
-                    border-left:3px solid {C['danger']};
-                    padding:10px 14px;border-radius:0 8px 8px 0;margin:5px 0;
-                    font-style:italic;color:{C['text']};font-size:.9rem;">"{ex}"</div>""",
-                    unsafe_allow_html=True)
+        <div class="card" style="border-left:4px solid {C['danger']}; padding:14px 20px; font-style:italic; color:{C['text']}; font-size:.95rem; line-height:1.5; margin-bottom:14px;">
+            "{ex}"
+        </div>""",
+        unsafe_allow_html=True)
 
     st.markdown('<p class="section-title">Salary: Leavers vs. Active Employees</p>', unsafe_allow_html=True)
     salary_stats = df.groupby("Termd")["Salary"].agg(["mean","median","min","max","count"]).reset_index()

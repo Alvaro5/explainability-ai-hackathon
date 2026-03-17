@@ -1,5 +1,5 @@
 import warnings; warnings.filterwarnings("ignore")
-import hashlib, time, random
+import hashlib, time, random, re
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -15,18 +15,78 @@ import shap
 SEED = 42
 random.seed(SEED); np.random.seed(SEED)
 
-C = {
-    "bg":           "#0E1117",
-    "card_bg":      "#1B2332",
-    "card_border":  "#2D3748",
-    "primary":      "#3B82F6",
-    "success":      "#10B981",
-    "danger":       "#EF4444",
-    "warning":      "#F59E0B",
-    "text":         "#F1F5F9",
-    "text_muted":   "#94A3B8",
-    "mint":         "#02C39A",
-}
+C = {}
+
+def set_theme(is_dark):
+    global C
+    if is_dark:
+        C.update({
+            "bg":           "#070b14",
+            "card_bg":      "#0f172a",
+            "card_border":  "#1e293b",
+            "primary":      "#3b82f6",
+            "success":      "#10b981",
+            "danger":       "#f43f5e",
+            "warning":      "#f59e0b",
+            "text":         "#f8fafc",
+            "text_muted":   "#94a3b8",
+            "mint":         "#02c39a",
+            "sb_bg":        "rgba(15, 23, 42, 0.6)",
+            "sb_border":    "rgba(30, 41, 59, 0.8)",
+            "card_rgba":    "rgba(15, 23, 42, 0.7)",
+            "card_hover":   "rgba(59, 130, 246, 0.3)",
+            "kpi_rgba":     "rgba(15, 23, 42, 0.85)",
+            "header_g1":    "rgba(15, 23, 42, 0.9)",
+            "header_g2":    "rgba(30, 58, 138, 0.4)",
+            "hover_bg":     "rgba(30, 41, 59, 0.5)",
+            "tab_act_bg":   "rgba(59, 130, 246, 0.15)",
+            "badge_hi_bg1": "#7f1d1d", "badge_hi_bg2": "#450a0a", "badge_hi_txt": "#fecaca", "badge_hi_bd": "#dc2626",
+            "badge_me_bg1": "#78350f", "badge_me_bg2": "#451a03", "badge_me_txt": "#fde68a", "badge_me_bd": "#d97706",
+            "badge_lo_bg1": "#064e3b", "badge_lo_bg2": "#022c22", "badge_lo_txt": "#a7f3d0", "badge_lo_bd": "#059669",
+            "prio_hi_bg":   "rgba(239, 68, 68, 0.15)", "prio_hi_txt": "#fca5a5", "prio_hi_bd": "rgba(239, 68, 68, 0.3)",
+            "prio_me_bg":   "rgba(245, 158, 11, 0.15)", "prio_me_txt": "#fcd34d", "prio_me_bd": "rgba(245, 158, 11, 0.3)",
+            "prio_in_bg":   "rgba(59, 130, 246, 0.15)", "prio_in_txt": "#93c5fd", "prio_in_bd": "rgba(59, 130, 246, 0.3)",
+            "call_gn_bg":   "rgba(16, 185, 129, 0.1)", "call_gn_txt": "#a7f3d0", "call_gn_bd": "rgba(16, 185, 129, 0.1)",
+            "call_bl_bg":   "rgba(59, 130, 246, 0.1)", "call_bl_txt": "#bfdbfe", "call_bl_bd": "rgba(59, 130, 246, 0.1)",
+            "thm_bg":       "rgba(30, 58, 138, 0.5)", "thm_txt": "#93c5fd", "thm_bd": "rgba(59, 130, 246, 0.5)",
+            "select_bg":    "rgba(15, 23, 42, 0.5)",
+            "svg_fill":     "#3b82f6",
+        })
+    else:
+        C.update({
+            "bg":           "#f1f5f9",
+            "card_bg":      "#ffffff",
+            "card_border":  "#cbd5e1",
+            "primary":      "#2563eb",
+            "success":      "#059669",
+            "danger":       "#e11d48",
+            "warning":      "#d97706",
+            "text":         "#0f172a",
+            "text_muted":   "#475569",
+            "mint":         "#059669",
+            "sb_bg":        "rgba(255, 255, 255, 0.65)",
+            "sb_border":    "rgba(203, 213, 225, 0.8)",
+            "card_rgba":    "rgba(255, 255, 255, 0.8)",
+            "card_hover":   "rgba(37, 99, 235, 0.3)",
+            "kpi_rgba":     "rgba(255, 255, 255, 0.9)",
+            "header_g1":    "rgba(255, 255, 255, 0.9)",
+            "header_g2":    "rgba(219, 234, 254, 0.8)",
+            "hover_bg":     "rgba(226, 232, 240, 0.5)",
+            "tab_act_bg":   "rgba(59, 130, 246, 0.1)",
+            "badge_hi_bg1": "#fee2e2", "badge_hi_bg2": "#fecaca", "badge_hi_txt": "#991b1b", "badge_hi_bd": "#f87171",
+            "badge_me_bg1": "#fef3c7", "badge_me_bg2": "#fde68a", "badge_me_txt": "#92400e", "badge_me_bd": "#fbbf24",
+            "badge_lo_bg1": "#d1fae5", "badge_lo_bg2": "#a7f3d0", "badge_lo_txt": "#065f46", "badge_lo_bd": "#34d399",
+            "prio_hi_bg":   "rgba(225, 29, 72, 0.1)", "prio_hi_txt": "#e11d48", "prio_hi_bd": "rgba(225, 29, 72, 0.2)",
+            "prio_me_bg":   "rgba(217, 119, 6, 0.1)", "prio_me_txt": "#d97706", "prio_me_bd": "rgba(217, 119, 6, 0.2)",
+            "prio_in_bg":   "rgba(37, 99, 235, 0.1)", "prio_in_txt": "#2563eb", "prio_in_bd": "rgba(37, 99, 235, 0.2)",
+            "call_gn_bg":   "rgba(5, 150, 105, 0.05)", "call_gn_txt": "#059669", "call_gn_bd": "rgba(5, 150, 105, 0.1)",
+            "call_bl_bg":   "rgba(37, 99, 235, 0.05)", "call_bl_txt": "#2563eb", "call_bl_bd": "rgba(37, 99, 235, 0.1)",
+            "thm_bg":       "rgba(219, 234, 254, 0.7)", "thm_txt": "#1d4ed8", "thm_bd": "rgba(37, 99, 235, 0.3)",
+            "select_bg":    "rgba(255, 255, 255, 0.8)",
+            "svg_fill":     "#2563eb",
+        })
+
+set_theme(True)
 
 CO2_G = {"Logistic Regression":0.0001, "Decision Tree":0.0002,
           "Random Forest":0.018, "XGBoost":0.009}
@@ -322,9 +382,12 @@ def simple_sentiment(txt):
            "growth","support","flexible","appreciate","proud","trust"]
     neg = ["bad","terrible","awful","hate","worst","leave","quit","resign",
            "underpaid","ignored","invisible","burnout","frustrated","blocked",
-           "micromanag","denied","never","nothing","toxic","dread"]
+           "micromanage","micromanaging","micromanages","micromanager",
+           "denied","never","nothing","toxic","dread"]
     t = txt.lower()
-    score = sum(1 for w in pos if w in t) - sum(1 for w in neg if w in t)
+    words = set(re.findall(r'[a-z]+', t))
+    score = (sum(1 for w in pos if w in words)
+             - sum(1 for w in neg if w in words))
     return round(score / max(len(txt.split())/10, 1), 2)
 
 
@@ -346,13 +409,14 @@ def risk_badge_html(p):
 
 def styled_chart(fig, height=None):
     upd = dict(
-        font=dict(family="Segoe UI, sans-serif", color=C["text"], size=13),
+        font=dict(family="Inter, sans-serif", color=C["text"], size=13),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=20, r=20, t=40, b=20),
-        xaxis=dict(gridcolor=C["card_border"], zerolinecolor=C["card_border"]),
-        yaxis=dict(gridcolor=C["card_border"], zerolinecolor=C["card_border"]),
+        xaxis=dict(gridcolor=C["card_border"], zerolinecolor=C["card_border"], showline=False, tickfont=dict(color=C["text_muted"])),
+        yaxis=dict(gridcolor=C["card_border"], zerolinecolor=C["card_border"], showline=False, tickfont=dict(color=C["text_muted"])),
         legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color=C["text_muted"])),
+        hoverlabel=dict(bgcolor=C["card_bg"], font_size=13, font_family="Inter", bordercolor=C["card_border"])
     )
     if height:
         upd["height"] = height
@@ -406,12 +470,15 @@ def load_data():
 
 
 @st.cache_resource(show_spinner="Training models...")
-def train_models(_df_tuple):
-    df = _df_tuple.copy()
+def train_models(_df):
+    df = _df.copy()
     LEAKAGE = ["DateofTermination","TermReason","EmploymentStatus","EmpStatusID"]
+    SENSITIVE = ["Sex","RaceDesc","HispanicLatino","MaritalDesc","CitizenDesc",
+                 "GenderID","MarriedID","MaritalStatusID"]
     DROP    = ["EmpID","Zip","State","Employee_Name","DateofHire","DOB",
-               "_hire_dt","_dob_dt","LastPerformanceReview_Date"]
-    df_fe = df.drop(columns=[c for c in LEAKAGE+DROP if c in df.columns], errors="ignore")
+               "_hire_dt","_dob_dt","LastPerformanceReview_Date",
+               "SentimentScore"]
+    df_fe = df.drop(columns=[c for c in LEAKAGE+DROP+SENSITIVE if c in df.columns], errors="ignore")
 
     encoders = {}
     for col in df_fe.select_dtypes(include="object").columns:
@@ -478,7 +545,15 @@ def train_models(_df_tuple):
     else:
         sv = sv_all
 
-    probs_all = rf.predict_proba(X.values)[:,1]
+    # Out-of-fold predictions to avoid overfit risk scores on training data
+    probs_all = np.zeros(len(X))
+    oof_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+    for train_idx, val_idx in oof_cv.split(X, y):
+        rf_fold = RandomForestClassifier(n_estimators=300, max_depth=None,
+                                         min_samples_leaf=2,
+                                         random_state=SEED, n_jobs=-1)
+        rf_fold.fit(X.values[train_idx], y.values[train_idx])
+        probs_all[val_idx] = rf_fold.predict_proba(X.values[val_idx])[:, 1]
 
     return {
         "trained":    trained,
@@ -496,7 +571,7 @@ def train_models(_df_tuple):
     }
 
 
-@st.cache_data(show_spinner="Preparing data...")
+@st.cache_resource(show_spinner="Preparing data...")
 def load_all():
     df, text_df = load_data()
     ml = train_models(df)

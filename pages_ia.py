@@ -12,6 +12,18 @@ from model import C, styled_chart, feat_fr, generate_explanation_fr
 SEED = 42
 
 
+@st.cache_resource(show_spinner="Training text model...")
+def _train_nlp(_text_df):
+    tfidf = TfidfVectorizer(max_features=200, ngram_range=(1, 2), stop_words="english")
+    X_txt = tfidf.fit_transform(_text_df["Text"])
+    y_txt = _text_df["Termd"]
+    Xt, Xv, yt, yv = train_test_split(X_txt, y_txt, test_size=0.2, random_state=SEED, stratify=y_txt)
+    lr_nlp = LogisticRegression(max_iter=1000, random_state=SEED)
+    lr_nlp.fit(Xt, yt)
+    nlp_acc = accuracy_score(yv, lr_nlp.predict(Xv))
+    return nlp_acc
+
+
 def render(data):
     df          = data["df"]
     emp         = data["emp"]
@@ -63,13 +75,7 @@ def render(data):
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f'<p class="section-title"><span class="theme-badge">Frugal AI</span> Text Analysis without LLM</p>', unsafe_allow_html=True)
 
-        tfidf  = TfidfVectorizer(max_features=200, ngram_range=(1,2), stop_words="english")
-        X_txt  = tfidf.fit_transform(text_df["Text"])
-        y_txt  = text_df["Termd"]
-        Xt, Xv, yt, yv = train_test_split(X_txt, y_txt, test_size=0.2, random_state=SEED, stratify=y_txt)
-        lr_nlp = LogisticRegression(max_iter=1000, random_state=SEED)
-        lr_nlp.fit(Xt, yt)
-        nlp_acc = accuracy_score(yv, lr_nlp.predict(Xv))
+        nlp_acc = _train_nlp(text_df)
 
         nlp_cmp = pd.DataFrame([
             {"Approach":"TF-IDF + Logistic Regression (OURS)", "Model Size":"~50 KB",
@@ -112,15 +118,22 @@ def render(data):
             top12_idx  = np.argsort(mean_abs_sv)[::-1][:12]
             top12_feat = [feat_fr(feat_names[i]) for i in top12_idx]
             top12_vals = [mean_abs_sv[i] for i in top12_idx]
-            top12_pct  = [v / sum(top12_vals) * 100 for v in top12_vals]
-            shap_global_df = pd.DataFrame({
-                "Rank": range(1, len(top12_feat)+1),
-                "Factor": top12_feat,
-                "Mean |SHAP|": [f"{v:.4f}" for v in top12_vals],
-                "Relative Impact": [f"{p:.1f}%" for p in top12_pct],
-            })
             st.caption("Global influence of each factor (mean absolute SHAP value)")
-            st.dataframe(shap_global_df, use_container_width=True, hide_index=True)
+            fig_global = go.Figure(go.Bar(
+                x=top12_vals[::-1],
+                y=top12_feat[::-1],
+                orientation="h",
+                marker=dict(color=C["primary"]),
+                text=[f"{v:.4f}" for v in top12_vals[::-1]],
+                textposition="outside",
+                textfont=dict(color=C["text"], size=11),
+            ))
+            fig_global = styled_chart(fig_global, height=380)
+            fig_global.update_layout(
+                xaxis_title="Mean |SHAP|",
+                margin=dict(l=10, r=50, t=20, b=30),
+            )
+            st.plotly_chart(fig_global, use_container_width=True)
 
         with col_e2:
             st.markdown(f"<span style='color:{C['text_muted']};font-size:.9rem;'>SHAP Dependence — Explore a factor</span>", unsafe_allow_html=True)
@@ -131,15 +144,26 @@ def render(data):
             feat_values = ml["X"].iloc[:,feat_idx].values
             shap_values = sv[:,feat_idx]
 
-            # Show as a summary table with percentile bins
-            bins = pd.cut(feat_values, bins=5)
-            shap_by_bin = pd.DataFrame({"bin": bins, "shap": shap_values}).groupby("bin")["shap"].agg(["mean","count"]).reset_index()
-            shap_by_bin.columns = ["Value Range", "Mean SHAP", "Count"]
-            shap_by_bin["Mean SHAP"] = shap_by_bin["Mean SHAP"].round(4)
-            shap_by_bin["Interpretation"] = shap_by_bin["Mean SHAP"].apply(
-                lambda v: "Increases risk" if v > 0.02 else "Reduces risk" if v < -0.02 else "Neutral")
+            fig_dep = go.Figure(go.Scatter(
+                x=feat_values,
+                y=shap_values,
+                mode="markers",
+                marker=dict(
+                    color=shap_values,
+                    colorscale=[[0, C["success"]], [0.5, C["text_muted"]], [1, C["danger"]]],
+                    size=6, opacity=0.7,
+                    colorbar=dict(title="SHAP", tickfont=dict(color=C["text_muted"])),
+                ),
+            ))
+            fig_dep = styled_chart(fig_dep, height=300)
+            fig_dep.update_layout(
+                xaxis_title=feat_sel,
+                yaxis_title="SHAP Value",
+                margin=dict(l=10, r=10, t=20, b=30),
+            )
+            fig_dep.add_hline(y=0, line_dash="dash", line_color=C["card_border"])
             st.caption(f"Effect of {feat_sel} on departure risk")
-            st.dataframe(shap_by_bin, use_container_width=True, hide_index=True)
+            st.plotly_chart(fig_dep, use_container_width=True)
 
         st.markdown(f'<p class="section-title"><span class="theme-badge">Explainable AI</span> Concrete example: SHAP to plain language</p>', unsafe_allow_html=True)
 
@@ -160,13 +184,11 @@ def render(data):
             st.dataframe(ex_shap_df, use_container_width=True, hide_index=True)
         with col_ex2:
             st.markdown(f"""
-            <div style="background:{C['card_bg']};border:1px solid {C['card_border']};
-                        border-left:4px solid {C['primary']};
-                        padding:18px;border-radius:0 10px 10px 0;margin-top:28px;">
-              <div style="font-size:.75rem;font-weight:700;color:{C['primary']};margin-bottom:10px;">
-                PLAIN LANGUAGE TRANSLATION
+            <div class="card" style="border-left:4px solid {C['primary']}; padding: 24px; margin-top: 28px;">
+              <div style="font-size:.8rem;font-weight:700;color:{C['primary']};margin-bottom:12px;letter-spacing:0.5px;">
+                <i class="fas fa-language"></i> PLAIN LANGUAGE TRANSLATION
               </div>
-              <div style="color:{C['text']};font-size:.93rem;line-height:1.65;">{ex_expl}</div>
+              <div style="color:{C['text']};font-size:.95rem;line-height:1.7;">{ex_expl}</div>
             </div>""", unsafe_allow_html=True)
 
         with st.expander("How to interpret these results?"):
@@ -258,7 +280,7 @@ def render_compliance(data):
         col_f1, col_f2 = st.columns(2)
         for col_w, attr, label in [(col_f1,"Sex","Gender"),(col_f2,"RaceDesc","Race")]:
             grp = df_aud.groupby(attr)["Predicted_Departure"].mean()
-            di  = grp.min()/grp.max()
+            di  = grp.min()/grp.max() if grp.max() > 0 else 1.0
             ok  = di >= 0.80
             with col_w:
                 status_txt = "PASS" if ok else "FAIL"

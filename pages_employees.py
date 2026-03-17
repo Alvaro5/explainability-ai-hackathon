@@ -135,7 +135,7 @@ def render(data):
                 st.markdown(f"""
                 <div class="card" style="border-left:4px solid {C['danger']}; padding: 18px;">
                   <div style="font-size:.75rem;font-weight:700;color:{C['danger']};margin-bottom:12px;letter-spacing:0.5px;">
-                    <i class="fas fa-sign-out-alt"></i> EXIT INTERVIEW</div>
+                    EXIT INTERVIEW</div>
                   <div style="font-style:italic;font-size:.95rem;color:{C['text']};line-height:1.6;">
                     "{exit_rows.iloc[0]['Text']}"</div>
                 </div>""", unsafe_allow_html=True)
@@ -147,7 +147,7 @@ def render(data):
                 st.markdown(f"""
                 <div class="card" style="border-left:4px solid {col_bd}; padding: 18px;">
                   <div style="font-size:.75rem;font-weight:700;color:{col_bd};margin-bottom:12px;letter-spacing:0.5px;">
-                    <i class="fas fa-poll"></i> SATISFACTION SURVEY</div>
+                    SATISFACTION SURVEY</div>
                   <div style="font-style:italic;font-size:.95rem;color:{C['text']};line-height:1.6;">
                     "{survey_rows.iloc[0]['Text']}"</div>
                 </div>""", unsafe_allow_html=True)
@@ -157,7 +157,7 @@ def render(data):
                 st.markdown(f"""
                 <div class="card" style="border-left:4px solid {C['primary']}; padding: 18px;">
                   <div style="font-size:.75rem;font-weight:700;color:{C['primary']};margin-bottom:12px;letter-spacing:0.5px;">
-                    <i class="fas fa-exchange-alt"></i> INTERNAL MOBILITY REQUEST</div>
+                    INTERNAL MOBILITY REQUEST</div>
                   <div style="font-style:italic;font-size:.95rem;color:{C['text']};line-height:1.6;">
                     "{transf_rows.iloc[0]['Text']}"</div>
                 </div>""", unsafe_allow_html=True)

@@ -186,7 +186,7 @@ def render(data):
             st.markdown(f"""
             <div class="card" style="border-left:4px solid {C['primary']}; padding: 24px; margin-top: 28px;">
               <div style="font-size:.8rem;font-weight:700;color:{C['primary']};margin-bottom:12px;letter-spacing:0.5px;">
-                <i class="fas fa-language"></i> PLAIN LANGUAGE TRANSLATION
+                PLAIN LANGUAGE TRANSLATION
               </div>
               <div style="color:{C['text']};font-size:.95rem;line-height:1.7;">{ex_expl}</div>
             </div>""", unsafe_allow_html=True)
@@ -271,8 +271,9 @@ def render_compliance(data):
         st.markdown('<p class="section-title">Disparate Impact Analysis</p>', unsafe_allow_html=True)
         st.caption("4/5 rule: ratio min_rate / max_rate > 0.80 = acceptable")
 
-        rf        = ml["trained"]["Random Forest"]
-        preds_all = rf.predict(ml["X"].values)
+        lr        = ml["trained"]["Logistic Regression"]
+        X_sc      = np.nan_to_num(ml["scaler"].transform(ml["X"]), nan=0.0)
+        preds_all = lr.predict(X_sc)
         df_aud    = df[["Sex","RaceDesc"]].copy()
         df_aud["Predicted_Departure"] = preds_all
         df_aud["Actual_Departure"]    = ml["y"].values

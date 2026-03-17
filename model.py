@@ -535,12 +535,22 @@ def train_models(_df):
 
     results_df = pd.DataFrame(results)
 
-    rf      = trained["Random Forest"]
-    explainer = shap.TreeExplainer(rf)
-    sv_all  = explainer.shap_values(X)
-    if isinstance(sv_all, list):
+    lr      = trained["Logistic Regression"]
+    
+    # Needs a background dataset or just the model for LinearExplainer. 
+    # LinearExplainer works directly on the coefficients but often expects an masker.
+    # For independent features, we can just pass the model and the scaled background data.
+    bg_data = shap.maskers.Independent(X_tr_sc, max_samples=100)
+    explainer = shap.LinearExplainer(lr, bg_data) 
+    
+    # We must explain the scaled data
+    X_sc = np.nan_to_num(scaler.transform(X), nan=0.0)
+    sv_all  = explainer.shap_values(X_sc)
+    
+    # LinearExplainer for binary classification typically returns a single 2D array
+    if isinstance(sv_all, list) and len(sv_all) > 1:
         sv = sv_all[1]
-    elif sv_all.ndim == 3:
+    elif sv_all.ndim == 3 and sv_all.shape[2] > 1:
         sv = sv_all[:,:,1]
     else:
         sv = sv_all
@@ -549,11 +559,19 @@ def train_models(_df):
     probs_all = np.zeros(len(X))
     oof_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
     for train_idx, val_idx in oof_cv.split(X, y):
-        rf_fold = RandomForestClassifier(n_estimators=300, max_depth=None,
-                                         min_samples_leaf=2,
-                                         random_state=SEED, n_jobs=-1)
-        rf_fold.fit(X.values[train_idx], y.values[train_idx])
-        probs_all[val_idx] = rf_fold.predict_proba(X.values[val_idx])[:, 1]
+        lr_fold = LogisticRegression(max_iter=1000, C=0.5, random_state=SEED)
+        
+        X_fold_tr = X.values[train_idx]
+        X_fold_val = X.values[val_idx]
+        y_fold_tr = y.values[train_idx]
+        
+        # Scale for Logistic Regression fold
+        scaler_fold = StandardScaler()
+        X_fold_tr_sc = np.nan_to_num(scaler_fold.fit_transform(X_fold_tr), nan=0.0)
+        X_fold_val_sc = np.nan_to_num(scaler_fold.transform(X_fold_val), nan=0.0)
+        
+        lr_fold.fit(X_fold_tr_sc, y_fold_tr)
+        probs_all[val_idx] = lr_fold.predict_proba(X_fold_val_sc)[:, 1]
 
     return {
         "trained":    trained,

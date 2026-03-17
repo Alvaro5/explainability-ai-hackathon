@@ -37,8 +37,9 @@ hr_anonymized.csv   hr_sensitive.csv
 |   notebook: 03_frugal.ipynb              |
 |                                          |
 |   Three models compared:                 |
-|   - Logistic Regression (baseline)       |
-|   - Random Forest        (selected)      |
+|   Three models compared:                 |
+|   - Logistic Regression  (selected)      |
+|   - Random Forest        (reference)     |
 |   - XGBoost              (reference)     |
 |                                          |
 |   Metrics: ROC-AUC, F1 (5-fold CV)       |
@@ -84,13 +85,13 @@ Keeping sensitive attributes (Sex, RaceDesc, HispanicLatino) in the model input 
 
 By splitting the data early in the pipeline, we make it structurally impossible for the model to use these attributes. The sensitive file only gets loaded in the bias audit step, where we check whether the model's outputs are fair across demographic groups — but the model itself never sees them during training.
 
-### Why Random Forest over Logistic Regression and XGBoost
+### Why Logistic Regression over Random Forest and XGBoost
 
-See `docs/model_card.md` for the full comparison. The short version: Random Forest matches Logistic Regression on ROC-AUC, gets a higher F1, and is actually cheaper in terms of CO2 and training time. XGBoost is the lightest option but has slightly lower ROC-AUC, which matters in a high-risk HR context.
+See `docs/model_card.md` for the full comparison. The short version: Logistic Regression matches Random Forest on ROC-AUC with a slightly lower F1. It is extremely fast and lightweight and is intrinsically interpretable. XGBoost is the lightest option but has slightly lower ROC-AUC, which matters in a high-risk HR context.
 
 ### Why SHAP over LIME or other methods
 
-SHAP gives consistent global and local explanations from the same framework, which made it easier to build a coherent dashboard. With Random Forest on a small dataset, SHAP values are also more stable than LIME approximations. The main tradeoff is that SHAP is slower to compute, but on 400 records this is not an issue.
+SHAP gives consistent global and local explanations from the same framework, which made it easier to build a coherent dashboard. With our Logistic Regression model, SHAP explanations provide clear additive insights, transforming the log-odds into understandable probabilities. The main tradeoff is that SHAP is slower to compute, but on 400 records this is not an issue.
 
 ### Batch inference, not real-time
 
@@ -146,7 +147,7 @@ Run the notebooks in this order:
 
 1. `01_eda.ipynb` — produces `processed/hr_anonymized.csv` and `processed/hr_sensitive.csv`
 2. `03_frugal.ipynb` — runs the model comparison and produces `emissions.csv` and `frugal_comparison.csv`
-3. `02_model.ipynb` — trains the final Random Forest, generates SHAP explanations, and launches the dashboard
+3. `02_model.ipynb` — trains the final Logistic Regression model, generates SHAP explanations, and launches the dashboard
 
 Each notebook is self-contained and includes comments explaining each step. No GPU is required. The full pipeline runs in under 10 seconds on a standard laptop.
 

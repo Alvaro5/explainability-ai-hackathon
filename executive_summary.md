@@ -21,14 +21,14 @@ We addressed two of the four hackathon themes.
 
 **Explainable AI.** Every prediction comes with a per-employee explanation generated using SHAP values. HR managers can see not just that an employee is flagged as high risk, but which factors are driving that assessment — for example, a low pay rate combined with a short tenure. Global feature importance is also available to give HR teams a company-wide view of the main attrition drivers.
 
-**Frugal AI.** We compared three models — Logistic Regression, Random Forest, and XGBoost — on both predictive performance and environmental cost measured with CodeCarbon. Random Forest was selected because it achieves the best F1 score (0.994) while costing 45% less in CO2 emissions than Logistic Regression. The total carbon footprint of the full training run is under 0.004g CO2eq, which is negligible. The solution deliberately avoids heavy infrastructure and oversized models.
+**Frugal AI.** We compared three models — Logistic Regression, Random Forest, and XGBoost — on both predictive performance and environmental cost measured with CodeCarbon. Logistic Regression was selected because it achieves an excellent F1 score (0.988) and ROC-AUC (1.000) while being lightweight, fast, and intrinsically interpretable. The total carbon footprint of the full training run is under 0.004g CO2eq, which is negligible. The solution deliberately avoids heavy infrastructure and oversized models.
 
 ## Results
 
 | Model | ROC-AUC | F1 Score | CO2 Emissions |
 |---|---|---|---|
-| Logistic Regression | 1.000 | 0.988 | 0.0020g |
-| Random Forest (selected) | 1.000 | 0.994 | 0.0011g |
+| Logistic Regression (selected) | 1.000 | 0.988 | 0.0020g |
+| Random Forest | 1.000 | 0.994 | 0.0011g |
 | XGBoost | 0.994 | 0.988 | 0.0001g |
 
 Metrics are from 5-fold cross-validation on a synthetic dataset of approximately 400 employee records.

@@ -63,8 +63,8 @@ Raw HR Data (CSV)
       |
       v
 [2. Model Comparison — Frugal AI]
-   - Logistic Regression  -> ROC-AUC: 1.000 | F1: 0.988 | CO2: 0.0020g | Time: 2.67s
-   - Random Forest        -> ROC-AUC: 1.000 | F1: 0.994 | CO2: 0.0011g | Time: 1.48s  (selected)
+   - Logistic Regression  -> ROC-AUC: 1.000 | F1: 0.988 | CO2: 0.0020g | Time: 2.67s  (selected)
+   - Random Forest        -> ROC-AUC: 1.000 | F1: 0.994 | CO2: 0.0011g | Time: 1.48s
    - XGBoost              -> ROC-AUC: 0.994 | F1: 0.988 | CO2: 0.0001g | Time: 0.19s
       |
       v
@@ -92,7 +92,7 @@ All metrics are from 5-fold cross-validation. Carbon tracking done with CodeCarb
 | Random Forest | 1.000 +/- 0.000 | 0.994 | 1.48s | 0.0011g |
 | XGBoost | 0.994 +/- 0.012 | 0.988 | 0.19s | 0.0001g |
 
-We went with Random Forest. It ties Logistic Regression on ROC-AUC but has a better F1, and it costs 45% less in carbon. XGBoost is faster and lighter but drops in ROC-AUC, which we did not want to sacrifice for this use case.
+We went with Logistic Regression. It matches Random Forest on ROC-AUC, sacrificing a tiny bit of F1 score, but its simple nature makes it incredibly fast, fully transparent, and extremely lightweight at a tiny carbon cost. XGBoost is faster and lighter but drops in ROC-AUC, which we did not want to sacrifice for this use case.
 
 ---
 

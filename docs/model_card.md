@@ -5,8 +5,8 @@
 | Field | Detail |
 |---|---|
 | Task | Binary classification — predict employee attrition (`Termd`: 0 = active, 1 = terminated) |
-| Selected model | Random Forest |
-| Baseline | Logistic Regression |
+| Selected model | Logistic Regression |
+| Baseline | Random Forest |
 | XAI method | SHAP (SHapley Additive exPlanations) |
 | Carbon tracking | CodeCarbon v3.2.3 |
 | Hardware | Apple M3 Pro, 12 cores, 18GB RAM — Ile-de-France, France |
@@ -23,15 +23,15 @@ We tried three models and measured both predictive performance and resource cost
 | Random Forest | 1.000 +/- 0.000 | 0.994 | 1.48s | 0.0011g |
 | XGBoost | 0.994 +/- 0.012 | 0.988 | 0.19s | 0.0001g |
 
-We picked Random Forest. It matches Logistic Regression on ROC-AUC but gets a higher F1 (0.994 vs 0.988), and it is actually cheaper — 45% less CO2 and faster to train. XGBoost is the lightest option but it loses 0.006 on ROC-AUC compared to the other two, which we did not want to accept for a use case where false negatives have real consequences (missing an at-risk employee).
+We picked Logistic Regression. It matches Random Forest on ROC-AUC (1.000 vs 1.000) while sacrificing a tiny bit of F1 score (0.988 vs 0.994). Its inherent transparency and simplicity make it an ideal choice for frugal and explainable AI. XGBoost is the lightest option but it loses 0.006 on ROC-AUC compared to the other two, which we did not want to accept for a use case where false negatives have real consequences (missing an at-risk employee).
 
 We set a rule before running the comparison: only choose XGBoost if it has a F1 gain of more than 5 percentage points over the others. It does not, so it stays as a reference point.
 
 Full emissions data is in `emissions.csv`.
 
-### Why Random Forest works well for explainability
+### Why Logistic Regression works well for explainability
 
-Random Forest fits well with SHAP because it produces stable feature importances across trees, which makes the local explanations more reliable. With Logistic Regression, SHAP explanations are essentially just the coefficients, which is less informative for HR users. With XGBoost the explanations are noisier on a small dataset.
+Logistic Regression fits well with SHAP because its decisions are inherently additive. The `LinearExplainer` can directly and quickly extract the contributions of each feature without relying on approximations like it would need for more complex tree ensembles. The explanations provided by the coefficients directly map to meaningful impacts on the output probability, making the local explanations highly reliable.
 
 ---
 
